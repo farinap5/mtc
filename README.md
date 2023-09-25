@@ -1,4 +1,5 @@
 **Entries**
+```
 abcd
 5
 11
@@ -18,9 +19,11 @@ aabb
 aaabbb
 abab
 bbaa
-
+```
 **Output**
+```
 1: aabb OK
 2: aaabbb OK
 3: abab not OK
 4: bbaa not OK
+```
