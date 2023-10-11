@@ -3,15 +3,24 @@
 #include <string.h>
 #include "LL/LL.h"
 
+int testSimble(char s, char *slist) {
+  for (int i = 0; i < strlen(slist); i++) {
+    if (s == slist[i] || s == '-')
+      return 0;
+  }
+  return 1;
+}
+
 /*
   @param v Verbosity
   @param qAccept Accept state
   @param transaction transaction matrix
   @param nt Number of transactions in matrix
   @param word Word to test
+  @param list of simbles
   @return
 */
-int testWord(int v, char qAccept, char transaction[][16], int nt, char *word) {
+int testWord(int v, char qAccept, char transaction[][16], int nt, char *word, char *slist) {
   char currentState = '1';
   Node *head = LLInitTape(word[0]);
 
@@ -27,8 +36,20 @@ int testWord(int v, char qAccept, char transaction[][16], int nt, char *word) {
   int error = 0;
   while (currentState != qAccept) {
     int aux = 0;
+    if (testSimble(ptr->simble, slist) != 0) {
+      printf("Error: Simble %c from %s not defined in simbles\n", ptr->simble, word);
+      return 1;
+    }
+
     for (int i=0; i < nt; i++) {
       if (currentState == transaction[i][0] && ptr->simble == transaction[i][2]) {
+        if (testSimble(transaction[i][4], slist) != 0) {
+          printf("Error: Simble %c not defined!\n", transaction[i][4]);
+          return 1;
+        }
+
+        // 1 a x D 2
+        // 0 2 4 6 8
         ptr->simble = transaction[i][4];
         ptr = LLMovePtr(ptr,transaction[i][6]);
         char pstate = currentState;
@@ -65,10 +86,22 @@ int main(int argc, char *argv[]) {
   int ttt; // tapes to test
   int v = 0;
 
+  for (int i=0; i < argc; i++) {
+    if (strcmp(argv[i], "-f") == 0) {
+      fname = argv[i+1];
+    } else if (strcmp(argv[i], "-h") == 0) {
+      printf("Usage: ./a.out -f file.txt\n");
+      return 0;
+    } else if (strcmp(argv[i], "-v") == 0) {
+      v = atoi(argv[i+1]);
+    }
+
+  }
+
   printf("Open file %s\n",fname);
   file = fopen(fname, "r");
   if (!file) {
-    printf("Error: No file found.");
+    printf("Error: No file found.\n");
     return 0;
   }
 
@@ -94,10 +127,9 @@ int main(int argc, char *argv[]) {
   //char words[ttt][64];
   fgets(t, 16, file);
   for (int i=0; i < ttt; i++) {
-    // TODO: test if simble in simbles avaliable.
     char word[64];
     fgets(word, 64, file);
-    int a = testWord( v, qAccept, transaction, nt, word);
+    int a = testWord( v, qAccept, transaction, nt, word, simbles);
     if (word[strlen(word)-1] == '\n') word[strlen(word)-1] = 0x0;
     if (a == 0) {
       printf("%s OK\n",word);
